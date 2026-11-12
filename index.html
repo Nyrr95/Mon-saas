@@ -1,0 +1,87 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RelancePro</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f5f7fc;color:#18243c}
+header{background:#14264b;color:white;padding:24px;text-align:center}
+header h1{margin:0;font-size:30px}
+header p{color:#d6e3ff}
+main{max-width:1000px;margin:auto;padding:25px 16px}
+.hero{text-align:center;padding:35px 10px}
+.hero h2{font-size:30px}
+.hero p{line-height:1.6;color:#526078}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
+.plan{background:white;border-radius:18px;padding:25px;box-shadow:0 5px 20px #172b4d12}
+.plan h3{font-size:23px}
+.price{font-size:34px;font-weight:bold;color:#235ce8}
+.price span{font-size:15px;color:#667}
+ul{padding-left:20px;line-height:2}
+button{width:100%;padding:14px;border:0;border-radius:10px;background:#235ce8;color:white;font-size:16px;font-weight:bold;cursor:pointer}
+.featured{border:2px solid #235ce8}
+.tag{color:#235ce8;font-weight:bold}
+footer{text-align:center;padding:30px;color:#68758b}
+</style>
+</head>
+<body>
+<header>
+<h1>RelancePro</h1>
+<p>Vos devis, vos clients, vos relances. Au même endroit.</p>
+</header>
+<main>
+<section class="hero">
+<h2>Gagnez du temps. Relancez plus facilement.</h2>
+<p>Un outil simple pour aider les artisans et petites entreprises à suivre leurs devis et leurs factures.</p>
+</section>
+<section class="plans">
+<div class="plan">
+<h3>Basique</h3>
+<div class="price">29 € <span>/mois</span></div>
+<ul>
+<li>1 utilisateur</li>
+<li>20 devis par mois</li>
+<li>Suivi des factures</li>
+<li>Relances manuelles</li>
+</ul>
+<button onclick="contact('Basique')">Choisir Basique</button>
+</div>
+<div class="plan featured">
+<p class="tag">Le plus populaire</p>
+<h3>Pro</h3>
+<div class="price">59 € <span>/mois</span></div>
+<ul>
+<li>3 utilisateurs</li>
+<li>Devis illimités</li>
+<li>Relances automatiques</li>
+<li>Gestion des clients</li>
+<li>Tableau de bord</li>
+</ul>
+<button onclick="contact('Pro')">Choisir Pro</button>
+</div>
+<div class="plan">
+<h3>Premium</h3>
+<div class="price">99 € <span>/mois</span></div>
+<ul>
+<li>10 utilisateurs</li>
+<li>Tout le forfait Pro</li>
+<li>Relances personnalisées</li>
+<li>Statistiques avancées</li>
+<li>Support prioritaire</li>
+</ul>
+<button onclick="contact('Premium')">Choisir Premium</button>
+</div>
+</section>
+<p style="text-align:center;color:#667;margin-top:30px">RelancePro est en cours de développement. Les abonnements ne sont pas encore disponibles.</p>
+</main>
+<footer>© 2026 RelancePro</footer>
+<script>
+function contact(plan){
+alert("Merci pour votre intérêt pour la formule "+plan+" ! Les inscriptions ouvriront prochainement.");
+}
+</script>
+</body>
+</html>
