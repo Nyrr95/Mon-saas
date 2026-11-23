@@ -234,7 +234,30 @@ async function loadInvoices() {
   }
 
   $('invoices').replaceChildren();
+  const today = new Date().toLocaleDateString('en-CA');
 
+  const euros = n => Number(n).toLocaleString('fr-FR', {
+    style: 'currency',
+    currency: 'EUR'
+  });
+
+  const unpaid = data.filter(f => f.statut === 'impayee');
+  const paid = data.filter(f => f.statut === 'payee');
+  const overdue = unpaid.filter(f => f.date_echeance < today);
+
+  $('total-count').textContent = data.length;
+
+  $('unpaid-total').textContent = euros(
+    unpaid.reduce((s, f) => s + Number(f.montant), 0)
+  );
+
+  $('overdue-total').textContent = euros(
+    overdue.reduce((s, f) => s + Number(f.montant), 0)
+  );
+
+  $('paid-total').textContent = euros(
+    paid.reduce((s, f) => s + Number(f.montant), 0)
+  );
   if (!data.length) {
     $('invoices').textContent = 'Aucune facture pour le moment.';
     return;
