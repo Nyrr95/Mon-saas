@@ -61,7 +61,25 @@ ${[['Basic',29],['Pro',49],['Premium',79]].map(([name,price])=>`
 <h2>Mon espace client</h2>
 <p>Connecté avec : <strong id="account-email"></strong></p>
 <button id="signout">Me déconnecter</button>
-
+<h2>Tableau de bord</h2>
+<div class="dashboard">
+  <div class="stat">
+    <h3>Total des factures</h3>
+    <strong id="total-count">0</strong>
+  </div>
+  <div class="stat">
+    <h3>Factures impayées</h3>
+    <strong id="unpaid-total">0 €</strong>
+  </div>
+  <div class="stat">
+    <h3>Factures en retard</h3>
+    <strong id="overdue-total">0 €</strong>
+  </div>
+  <div class="stat">
+    <h3>Factures payées</h3>
+    <strong id="paid-total">0 €</strong>
+  </div>
+</div>
 <h2>Ajouter une facture</h2>
 <form id="invoice-form">
 <input id="client-name" placeholder="Nom du client" required>
@@ -79,7 +97,24 @@ ${[['Basic',29],['Pro',49],['Premium',79]].map(([name,price])=>`
 </main>
 <footer>© RelancePro</footer>
 `;
-
+const dashboardStyle = document.createElement('style');
+dashboardStyle.textContent = `
+.dashboard{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:15px;
+  margin:20px 0;
+}
+.stat{
+  background:#eef4ff;
+  padding:20px;
+  border-radius:12px;
+  text-align:center;
+}
+.stat h3{font-size:15px;color:#526078}
+.stat strong{font-size:26px;color:#172b55}
+`;
+document.head.appendChild(dashboardStyle);
 const $ = id => document.getElementById(id);
 const message = text => $('message').textContent = text;
 const invoiceMessage = text => $('invoice-message').textContent = text;
@@ -94,6 +129,23 @@ function showSession(session) {
   $('account').hidden = !currentUser;
   $('account-email').textContent = currentUser?.email || '';
   $('invoices').replaceChildren();
+  const today = new Date().toLocaleDateString('en-CA');
+const euros = n => Number(n).toLocaleString('fr-FR', {
+  style:'currency',
+  currency:'EUR'
+});
+
+const unpaid = data.filter(f => f.statut === 'impayee');
+const paid = data.filter(f => f.statut === 'payee');
+const overdue = unpaid.filter(f => f.date_echeance < today);
+
+$('total-count').textContent = data.length;
+$('unpaid-total').textContent =
+  euros(unpaid.reduce((s,f) => s + Number(f.montant), 0));
+$('overdue-total').textContent =
+  euros(overdue.reduce((s,f) => s + Number(f.montant), 0));
+$('paid-total').textContent =
+  euros(paid.reduce((s,f) => s + Number(f.montant), 0));
   invoiceMessage('');
 
   if (currentUser) loadInvoices();
