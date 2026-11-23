@@ -209,7 +209,8 @@ $('invoice-form').onsubmit = async event => {
 
   $('invoice-form').reset();
   invoiceMessage('Facture enregistrée !');
-  await loadInvoices();
+  requestVersion++;
+await loadInvoices();
 };
 
 async function loadInvoices() {
