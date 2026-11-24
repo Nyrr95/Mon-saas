@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const supabase = createClient(
@@ -58,9 +57,10 @@ ${[['Basic',29],['Pro',49],['Premium',79]].map(([name,price])=>`
 <h2>${name}</h2>
 <p class="price">${price} €</p>
 <p>par mois</p>
-<button disabled>Bientôt disponible</button>
+<button type="button" class="checkout-button" data-formule="${name.toLowerCase()}">Tester cet abonnement</button>
 </div>`).join('')}
 </div>
+<p id="checkout-message" role="status"></p>
 </section>
 
 <section class="panel" id="auth">
@@ -120,6 +120,7 @@ ${[['Basic',29],['Pro',49],['Premium',79]].map(([name,price])=>`
 <footer>© RelancePro</footer>
 `;
 
+
 const $ = id => document.getElementById(id);
 
 const message = text => {
@@ -128,6 +129,10 @@ const message = text => {
 
 const invoiceMessage = text => {
   $('invoice-message').textContent = text;
+};
+
+const checkoutMessage = text => {
+  $('checkout-message').textContent = text;
 };
 
 const euros = value => Number(value).toLocaleString('fr-FR', {
@@ -146,6 +151,7 @@ function localToday() {
 let currentUser = null;
 let requestVersion = 0;
 let currentUserId = null;
+let checkoutPending = false;
 
 function resetDashboard() {
   $('total-count').textContent = '0';
@@ -171,9 +177,14 @@ function showSession(session) {
     $('invoices').replaceChildren();
     resetDashboard();
     invoiceMessage('');
+    checkoutMessage('');
 
     if (user) {
-      loadInvoices();
+      setTimeout(() => {
+        if (currentUser?.id === newUserId) {
+          loadInvoices();
+        }
+      }, 0);
     }
   }
 }
@@ -247,6 +258,7 @@ $('signout').onclick = async () => {
   showSession(null);
   message('Déconnecté.');
 };
+
 
 $('invoice-form').onsubmit = async event => {
   event.preventDefault();
@@ -369,6 +381,7 @@ async function loadInvoices() {
       const actions = document.createElement('div');
       actions.className = 'invoice-actions';
 
+    
       const statusButton = document.createElement('button');
       statusButton.textContent = facture.statut === 'payee'
         ? 'Marquer impayée'
@@ -446,6 +459,96 @@ $('refresh-invoices').onclick = () => {
   loadInvoices();
 };
 
+
+async function startCheckout(formule) {
+  if (checkoutPending) return;
+
+  if (!currentUser) {
+    checkoutMessage('Connectez-vous avant de choisir un abonnement.');
+    $('auth').scrollIntoView({ behavior: 'smooth' });
+    return;
+  }
+
+  if (!['basic', 'pro', 'premium'].includes(formule)) {
+    checkoutMessage('Formule invalide.');
+    return;
+  }
+
+  const userId = currentUser.id;
+  checkoutPending = true;
+
+  const buttons = document.querySelectorAll('.checkout-button');
+
+  buttons.forEach(button => {
+    button.disabled = true;
+  });
+
+  checkoutMessage('Préparation du paiement Stripe...');
+
+  try {
+    const { data: sessionData, error: sessionError } =
+      await supabase.auth.getSession();
+
+    if (sessionError || !sessionData.session) {
+      throw new Error('Veuillez vous reconnecter.');
+    }
+
+    if (sessionData.session.user.id !== userId) {
+      throw new Error('La session a changé.');
+    }
+
+    const { data, error } = await supabase.functions.invoke(
+      'create-checkout',
+      {
+        body: { formule },
+        headers: {
+          Authorization: 'Bearer ' + sessionData.session.access_token
+        }
+      }
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data?.url) {
+      throw new Error('Lien de paiement indisponible.');
+    }
+
+    const checkoutUrl = new URL(data.url);
+
+    if (
+      checkoutUrl.protocol !== 'https:' ||
+      checkoutUrl.hostname !== 'checkout.stripe.com'
+    ) {
+      throw new Error('Lien de paiement invalide.');
+    }
+
+    if (currentUser?.id !== userId) {
+      throw new Error('La session a changé.');
+    }
+
+    window.location.assign(checkoutUrl.href);
+
+  } catch (error) {
+    checkoutMessage(
+      'Erreur de paiement : ' + error.message
+    );
+  } finally {
+    checkoutPending = false;
+
+    buttons.forEach(button => {
+      button.disabled = false;
+    });
+  }
+}
+
+document.querySelectorAll('.checkout-button').forEach(button => {
+  button.addEventListener('click', () => {
+    startCheckout(button.dataset.formule);
+  });
+});
+
 supabase.auth.onAuthStateChange((_event, session) => {
   showSession(session);
 });
@@ -455,5 +558,26 @@ supabase.auth.getSession().then(({data,error}) => {
     message('Erreur : ' + error.message);
   } else {
     showSession(data.session);
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const paiement = params.get('paiement');
+
+  if (paiement === 'success') {
+    checkoutMessage(
+      'Retour de Stripe. Activation de votre abonnement en attente de vérification.'
+    );
+  }
+
+  if (paiement === 'annule') {
+    checkoutMessage(
+      'Paiement annulé. Vous pouvez réessayer.'
+    );
+  }
+
+  if (paiement) {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('paiement');
+    window.history.replaceState({}, '', url.toString());
   }
 });
